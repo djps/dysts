@@ -76,6 +76,7 @@ def standardize_ts(a, scale=1.0):
     ts_scaled = (a - np.mean(a, axis=-2, keepdims=True))/(scale*stds)
     return ts_scaled
 
+
 def integrate_dyn(f, ic, tvals, noise=0, dtval=None, **kwargs):
     """
     Given the RHS of a dynamical system, integrate the system
@@ -117,11 +118,14 @@ def integrate_dyn(f, ic, tvals, noise=0, dtval=None, **kwargs):
     else:
         #dt = np.median(np.diff(tvals))
         fc = lambda t, y : f(y, t)
-        sol0 = solve_ivp(fc, [tvals[0], tvals[-1]], ic, t_eval=tvals, first_step=dtval, **kwargs)
+        #print(tvals[0], tvals[-1], ic, dtval, kwargs)
+        sol0 = solve_ivp(fc, [tvals[0], tvals[-1]], ic, t_eval=tvals, first_step=dtval, rtol=1e-12, atol=1e-14, **kwargs)
         sol = sol0.y
+        #print(sol)
         #sol = odeint(f, np.array(ic), tvals).T
 
     return sol
+
 
 def pad_axis(arr, d, axis=-1, padding=0):
     """

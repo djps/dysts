@@ -15,6 +15,57 @@ import numpy as np
 from .base import DynSys, DynSysDelay, staticjit
 
 
+class RayleighPlesset(DynSys):
+    @staticjit
+    def _rhs(R, U, Omega, t, P, Pa, R0, a, c, gamma, mu, omega, rho, sigma):
+
+        # applied pressure
+        Wave: np.float64 = -np.sin(Omega)
+        dWave: np.float64 = -np.cos(Omega)
+
+        # internal pressure
+        Pg: np.float64 = (Pa + 2. * sigma / R0) * (
+                                                   (R0**3 - a**3) / (R**3 - a**3)
+                                                   )**gamma
+
+        # derivative of internal pressure with respect to time
+        dPg: np.float64 = -(3.0 * gamma * Pg * U * R**2) / (R**3 - a**3)
+
+        # governing equations
+        dotR: np.float64 = U
+
+        dotU: np.float64 = (1. / R) * (- (3. / 2.) * U**2 +
+                                       (1. / rho) * (Pg - Pa -
+                                                     P * Wave -
+                                                     (2. * sigma) / R -
+                                                     (4. * mu * U * rho) / R +
+                                                     (R / c) * (P * dWave +
+                                                                dPg)))
+
+        dotOmega: np.float64 = omega
+
+        return dotR, dotU, dotOmega
+
+
+    # @staticjit
+    # def _jac(R, U, Omega, t, a, sigma, rho, mu, P, Pa, omega, R0, gamma, c):
+
+    #     Pg = (Pa + (2.0 * sigma) / R0) * ( (R0**3 - a**3) / (R**3 - a**3) )**gamma
+
+    #     df1dR = - (( -(3.0 / 2.0) * U**2 + (1.0 / rho) * (Pg - Pa + P * np.sin(Omega) - (2.0 * sigma) / R - (4.0 * mu * U * rho) / R) ) / R ) / R + (1.0 / (rho * R)) * (-3.0 * gamma * Pg * R**2 / (R**3 - a**3) +
+    #                                                                 (2.0 * sigma) / R**2 +
+    #                                                                 (4.0 * mu * U) / R**2)
+
+    #     df1dU= - (3.0 * U + 4.0 * mu / (rho * R) ) / R
+
+    #     df1dTheta = (1.0 / (rho * R)) * P * np.cos(Omega)
+
+    #     J = [[0.0, 1.0, 0.0],
+    #         [df1dR, df1dU, df1dTheta],
+    #         [0.0, 0.0, 0.0]]
+
+    #     return J
+
 
 class Lorenz(DynSys):
     @staticjit
@@ -316,7 +367,7 @@ class LidDrivenCavityFlow(DynSys):
         vy1 = b * np.sinh(np.pi * b / a) * np.cosh(np.pi * y / a) - np.cosh(np.pi * b / a) * y * np.sinh(np.pi * y / a)
         vy2 = b * np.sinh(2 * np.pi * b / a) * np.cosh(2 * np.pi * y / a) - np.cosh(2 * np.pi * b / a) * y * np.sinh(2 * np.pi * y / a)
         vy = prefactor1 * vy1 + prefactor2 * vy2
-        
+
         # vy1 = b * np.sinh(np.pi * b / a) * np.cosh(np.pi * y / a) - np.cosh(np.pi * b / a) * y * np.sinh(np.pi * y / a)
         # vy2 = b * np.sinh(2 * np.pi * b / a) * np.cosh(2 * np.pi * y / a) - np.cosh(2 * np.pi * b / a) * y * np.sinh(2 * np.pi * y / a)
         # vy = np.pi * prefactor1 * vy1 + 2 * np.pi * prefactor2 * vy2

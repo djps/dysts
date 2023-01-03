@@ -1,4 +1,43 @@
 {
+    "RayleighPlesset": {
+        "bifurcation_parameter": null,
+        "citation": "Paper: diaz de la rosa or MacDonald and Gomatam (2006) Chaotic dynamics of microbubbles in ultrasonic fields https://doi.org/10.1243/095440606X79596",
+        "correlation_dimension": 1.8926529653780282,
+        "delay": false,
+        "description": "bubble. dt[100 per cycle]=2.3271057e-6, dt[500]=4.654211338651545e-07",
+        "dt": 5E-9,
+        "embedding_dimension": 3,
+        "hamiltonian": false,
+        "initial_conditions": [
+            2E-6,
+            0.0,
+            0.0
+        ],
+        "kaplan_yorke_dimension": 2.3501297618370773,
+        "lyapunov_spectrum_estimated": [
+            0.08947878317195473,
+            0.0,
+            -0.3090729926541944
+        ],
+        "maximum_lyapunov_estimated": 0.08947878317195473,
+        "multiscale_entropy": 0.514512246123007,
+        "nonautonomous": false,
+        "parameters": {
+            "a": 0.1411E-6,
+            "sigma": 0.073,
+            "rho": 1000.0,
+            "mu": 1.002E-6,
+            "P": 1.0E6,
+            "Pa": 101325.0,
+            "omega": 12.5663706e6,
+            "R0": 2E-6,
+            "gamma": 1.66666,
+            "c": 1480.0
+        },
+        "period": 5E-7,
+        "pesin_entropy": 0.10978427938362978,
+        "unbounded_indices": []
+    },
     "Aizawa": {
         "bifurcation_parameter": null,
         "citation": "Aizawa, Yoji, and Tatsuya Uezu (1982). Topological Aspects in Chaos and in 2 k-Period Doubling Cascade. Progress of Theoretical Physics 67.3 (1982): 982-985. See also Langford (1984). Numerical studies of torus bifurcations. Numerical Methods for Bifurcation Problems. Birkhauser, Basel, 1984. 285-295.",
@@ -183,8 +222,8 @@
         "embedding_dimension": 3,
         "hamiltonian": false,
         "initial_conditions": [
-            0.026544189906947246, 
-            0.20580772677536016, 
+            0.026544189906947246,
+            0.20580772677536016,
             0.43758119702219506
         ],
         "kaplan_yorke_dimension": 2.1859596374283137,
@@ -483,14 +522,14 @@
         "embedding_dimension": 3,
         "hamiltonian": true,
         "initial_conditions": [
-            3.966790341130254, 
+            3.966790341130254,
             0.18425981346720144,
             0.0
         ],
         "kaplan_yorke_dimension": 2.9856669109882814,
         "lyapunov_spectrum_estimated": [
             1.00757312,
-            -0.00276829, 
+            -0.00276829,
             -1.01941623
         ],
         "maximum_lyapunov_estimated": 1.00757312,

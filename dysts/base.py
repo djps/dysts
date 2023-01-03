@@ -214,6 +214,7 @@ class DynSys(BaseDyn):
         param_list = [
             getattr(self, param_name) for param_name in self.get_param_names()
         ]
+        # print("rhs:", X.T, t, param_list)
         out = self._rhs(*X.T, t, *param_list)
         return out
 
@@ -258,7 +259,7 @@ class DynSys(BaseDyn):
         np.random.seed(self.random_state)
 
         if resample:
-            #         print((self.period * self.dt))
+            # print((self.period * self.dt))
             tlim = (self.period) * (n / pts_per_period)
             upscale_factor = (tlim / self.dt) / n
             if upscale_factor > 1e3:
@@ -268,15 +269,19 @@ class DynSys(BaseDyn):
             tpts = np.linspace(0, tlim, n)
 
         m = len(np.array(self.ic).shape)
+        #print(m, np.array(self.ic), tpts)
         if m < 1:
             m = 1
         if m == 1:
+            #print("integrating...")
             sol = integrate_dyn(
                 self, self.ic, tpts, dtval=self.dt, method=method, noise=noise
             ).T
+            #print(np.shape(sol))
         else:
             sol = list()
             for ic in self.ic:
+                #print("integrating...")
                 traj = integrate_dyn(
                     self, ic, tpts, dtval=self.dt, method=method, noise=noise
                 )
@@ -286,6 +291,7 @@ class DynSys(BaseDyn):
                 else:
                     warnings.warn(f"Integration did not complete for initial condition {ic}, skipping this point")
                     pass
+                #print(np.shape(sol))
             sol = np.transpose(np.array(sol), (0, 2, 1))
 
         if hasattr(self, "_postprocessing") and postprocess:
@@ -557,6 +563,24 @@ def get_attractor_list(model_type="continuous"):
     return attractor_list
 
 
+def dumpclean(obj):
+    if isinstance(obj, dict):
+        for k, v in obj.items():
+            if hasattr(v, '__iter__'):
+                # print(k)
+                dumpclean(v)
+            else:
+                s = f'{k} : {v}'
+    elif isinstance(obj, list):
+        for v in obj:
+            if hasattr(v, '__iter__'):
+                dumpclean(v)
+            else:
+                s = v
+    else:
+        s = obj
+    return s
+
 def make_trajectory_ensemble(n, subset=None, use_multiprocessing=False, random_state=None, **kwargs):
     """
     Integrate multiple dynamical systems with identical settings
@@ -575,6 +599,8 @@ def make_trajectory_ensemble(n, subset=None, use_multiprocessing=False, random_s
     if not subset:
         subset = get_attractor_list()
 
+    print(subset)
+
     if use_multiprocessing:
         warnings.warn(
             "Multiprocessing not implemented."
@@ -585,6 +611,8 @@ def make_trajectory_ensemble(n, subset=None, use_multiprocessing=False, random_s
     
     all_sols = dict()
     for equation_name in subset:
+        s = dumpclean(kwargs)
+        print(equation_name + " | " + s + " | ...")
         eq = getattr(flows, equation_name)()
         eq.random_state = random_state
         sol = eq.make_trajectory(n, **kwargs)
