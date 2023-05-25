@@ -2,7 +2,13 @@
 
 Analyze more than a hundred chaotic systems, including the Rayleigh-Plesset system.
 
+To see the figure generated in `benchmarks/figure_descriptive_statistics.ipynb`:
+
 ![An embedding of all chaotic systems in the collection](dysts/data/fig_github.png)
+
+- [ ] install dependencies in requirements
+- [ ] remove degas
+- [ ] add to `TimeSeriesDataset("../dysts/data/large_univariate__pts_per_period_100__periods_100.json")`
 
 ## Basic Usage
 
