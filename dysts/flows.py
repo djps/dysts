@@ -12,59 +12,104 @@ Requirements:
 """
 
 import numpy as np
-from .base import DynSys, DynSysDelay, staticjit
+from .base import DynSys, DynSysDelay, staticjit, njit
+
+
+@njit
+def _rp_accel(R, U, Omega, P, Pa, R0, a, c, gamma, mu, omega, rho, sigma):
+    """Bubble wall acceleration dU/dt for the Rayleigh-Plesset model with a
+    van der Waals hard core and a first-order (R/c) compressibility term.
+    mu is the kinematic viscosity."""
+
+    # applied pressure: p_inf(t) = Pa + P * Wave
+    Wave = -np.sin(Omega)
+    dWave = -np.cos(Omega)
+
+    # internal pressure
+    D = R**3 - a**3
+    Pg = (Pa + 2. * sigma / R0) * ((R0**3 - a**3) / D)**gamma
+
+    # derivative of internal pressure with respect to time
+    dPg = -(3.0 * gamma * Pg * U * R**2) / D
+
+    B = (Pg - Pa - P * Wave - (2. * sigma) / R - (4. * mu * U * rho) / R +
+         (R / c) * (-P * omega * dWave + dPg))
+
+    return (1. / R) * (-(3. / 2.) * U**2 + B / rho)
+
+
+@njit
+def _rp_accel_grad(R, U, Omega, P, Pa, R0, a, c, gamma, mu, omega, rho, sigma):
+    """Partial derivatives of _rp_accel with respect to R, U and Omega."""
+    Wave = -np.sin(Omega)
+    dWave = -np.cos(Omega)
+    D = R**3 - a**3
+    Pg = (Pa + 2. * sigma / R0) * ((R0**3 - a**3) / D)**gamma
+    dPg = -(3.0 * gamma * Pg * U * R**2) / D
+    B = (Pg - Pa - P * Wave - (2. * sigma) / R - (4. * mu * U * rho) / R +
+         (R / c) * (-P * omega * dWave + dPg))
+
+    dPg_dR = -3.0 * gamma * Pg * R**2 / D
+    ddPg_dR = -3.0 * gamma * U * Pg * (2.0 * R * D - 3.0 * (1.0 + gamma) * R**4) / D**2
+    ddPg_dU = -3.0 * gamma * Pg * R**2 / D
+
+    dB_dR = (dPg_dR + 2. * sigma / R**2 + 4. * mu * U * rho / R**2 +
+             (-P * omega * dWave + dPg) / c + (R / c) * ddPg_dR)
+    dB_dU = -4. * mu * rho / R + (R / c) * ddPg_dU
+    dB_dOmega = P * np.cos(Omega) - (R / c) * P * omega * np.sin(Omega)
+
+    dA_dR = -(-(3. / 2.) * U**2 + B / rho) / R**2 + dB_dR / (rho * R)
+    dA_dU = (-3. * U + dB_dU / rho) / R
+    dA_dOmega = dB_dOmega / (rho * R)
+    return dA_dR, dA_dU, dA_dOmega
 
 
 class RayleighPlesset(DynSys):
     @staticjit
     def _rhs(R, U, Omega, t, P, Pa, R0, a, c, gamma, mu, omega, rho, sigma):
+        dotU = _rp_accel(R, U, Omega, P, Pa, R0, a, c, gamma, mu, omega, rho, sigma)
+        return U, dotU, omega
 
-        # applied pressure
-        Wave: np.float64 = -np.sin(Omega)
-        dWave: np.float64 = -np.cos(Omega)
+    @staticjit
+    def _jac(R, U, Omega, t, P, Pa, R0, a, c, gamma, mu, omega, rho, sigma):
+        dA_dR, dA_dU, dA_dOmega = _rp_accel_grad(
+            R, U, Omega, P, Pa, R0, a, c, gamma, mu, omega, rho, sigma
+        )
+        row1 = [0.0, 1.0, 0.0]
+        row2 = [dA_dR, dA_dU, dA_dOmega]
+        row3 = [0.0, 0.0, 0.0]
+        return [row1, row2, row3]
 
-        # internal pressure
-        Pg: np.float64 = (Pa + 2. * sigma / R0) * (
-                                                   (R0**3 - a**3) / (R**3 - a**3)
-                                                   )**gamma
-
-        # derivative of internal pressure with respect to time
-        dPg: np.float64 = -(3.0 * gamma * Pg * U * R**2) / (R**3 - a**3)
-
-        # governing equations
-        dotR: np.float64 = U
-
-        dotU: np.float64 = (1. / R) * (- (3. / 2.) * U**2 +
-                                       (1. / rho) * (Pg - Pa -
-                                                     P * Wave -
-                                                     (2. * sigma) / R -
-                                                     (4. * mu * U * rho) / R +
-                                                     (R / c) * (P * dWave +
-                                                                dPg)))
-
-        dotOmega: np.float64 = omega
-
-        return dotR, dotU, dotOmega
+    @staticjit
+    def _postprocessing(R, U, Omega):
+        return R, U, np.sin(Omega)
 
 
-    # @staticjit
-    # def _jac(R, U, Omega, t, a, sigma, rho, mu, P, Pa, omega, R0, gamma, c):
+class RayleighPlessetLog(DynSys):
+    """RayleighPlesset with u = ln(R / 1 m) as the first state variable, so the
+    solver controls relative error in R and R cannot become negative. Parameters
+    and units are as for RayleighPlesset; postprocessing returns R in metres."""
 
-    #     Pg = (Pa + (2.0 * sigma) / R0) * ( (R0**3 - a**3) / (R**3 - a**3) )**gamma
+    @staticjit
+    def _rhs(u, U, Omega, t, P, Pa, R0, a, c, gamma, mu, omega, rho, sigma):
+        R = np.exp(u)
+        dotU = _rp_accel(R, U, Omega, P, Pa, R0, a, c, gamma, mu, omega, rho, sigma)
+        return U / R, dotU, omega
 
-    #     df1dR = - (( -(3.0 / 2.0) * U**2 + (1.0 / rho) * (Pg - Pa + P * np.sin(Omega) - (2.0 * sigma) / R - (4.0 * mu * U * rho) / R) ) / R ) / R + (1.0 / (rho * R)) * (-3.0 * gamma * Pg * R**2 / (R**3 - a**3) +
-    #                                                                 (2.0 * sigma) / R**2 +
-    #                                                                 (4.0 * mu * U) / R**2)
+    @staticjit
+    def _jac(u, U, Omega, t, P, Pa, R0, a, c, gamma, mu, omega, rho, sigma):
+        R = np.exp(u)
+        dA_dR, dA_dU, dA_dOmega = _rp_accel_grad(
+            R, U, Omega, P, Pa, R0, a, c, gamma, mu, omega, rho, sigma
+        )
+        row1 = [-U / R, 1.0 / R, 0.0]
+        row2 = [R * dA_dR, dA_dU, dA_dOmega]
+        row3 = [0.0, 0.0, 0.0]
+        return [row1, row2, row3]
 
-    #     df1dU= - (3.0 * U + 4.0 * mu / (rho * R) ) / R
-
-    #     df1dTheta = (1.0 / (rho * R)) * P * np.cos(Omega)
-
-    #     J = [[0.0, 1.0, 0.0],
-    #         [df1dR, df1dU, df1dTheta],
-    #         [0.0, 0.0, 0.0]]
-
-    #     return J
+    @staticjit
+    def _postprocessing(u, U, Omega):
+        return np.exp(u), U, np.sin(Omega)
 
 
 class Lorenz(DynSys):

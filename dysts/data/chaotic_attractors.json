@@ -38,6 +38,47 @@
         "pesin_entropy": 0.10978427938362978,
         "unbounded_indices": []
     },
+    "RayleighPlessetLog": {
+        "bifurcation_parameter": "omega",
+        "citation": "Paper: diaz de la rosa or MacDonald and Gomatam (2006) Chaotic dynamics of microbubbles in ultrasonic fields https://doi.org/10.1243/095440606X79596",
+        "correlation_dimension": 1.8926529653780282,
+        "delay": false,
+        "description": "Rayleigh-Plesset bubble with log-radius state u = ln(R / 1 m); see RayleighPlesset. Derived fields copied from RayleighPlesset, to be recomputed.",
+        "dt": 5e-09,
+        "embedding_dimension": 3,
+        "hamiltonian": false,
+        "initial_conditions": [
+            -13.122363377404328,
+            0.0,
+            0.0
+        ],
+        "kaplan_yorke_dimension": 2.3501297618370773,
+        "lyapunov_spectrum_estimated": [
+            0.08947878317195473,
+            0.0,
+            -0.3090729926541944
+        ],
+        "maximum_lyapunov_estimated": 0.08947878317195473,
+        "multiscale_entropy": 0.514512246123007,
+        "nonautonomous": true,
+        "parameters": {
+            "a": 1.411e-07,
+            "sigma": 0.073,
+            "rho": 1000.0,
+            "mu": 1.002e-06,
+            "P": 1000000.0,
+            "Pa": 101325.0,
+            "omega": 12566370.6,
+            "R0": 2e-06,
+            "gamma": 1.66666,
+            "c": 1480.0
+        },
+        "period": 5e-07,
+        "pesin_entropy": 0.10978427938362978,
+        "unbounded_indices": [
+            2
+        ]
+    },
     "Aizawa": {
         "bifurcation_parameter": null,
         "citation": "Aizawa, Yoji, and Tatsuya Uezu (1982). Topological Aspects in Chaos and in 2 k-Period Doubling Cascade. Progress of Theoretical Physics 67.3 (1982): 982-985. See also Langford (1984). Numerical studies of torus bifurcations. Numerical Methods for Bifurcation Problems. Birkhauser, Basel, 1984. 285-295.",

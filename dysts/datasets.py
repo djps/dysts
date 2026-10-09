@@ -2,7 +2,6 @@ import json
 import warnings
 import numpy as np
 import os
-import pkg_resources
 import pandas as pd
 
 try:
@@ -177,7 +176,7 @@ def featurize_timeseries(dataset):
 
 def load_file(filename):
     """Locate and import from the module data directory"""
-    base_path = pkg_resources.resource_filename("dysts", "data")
+    base_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
     data_path = os.path.join(base_path, filename)
     dataset = TimeSeriesDataset(data_path)
     return dataset

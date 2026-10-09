@@ -9,7 +9,8 @@ from numpy.fft import rfft, irfft
 
 import warnings
 from scipy.integrate import odeint, solve_ivp
-from scipy.signal import blackmanharris, fftconvolve, resample, periodogram
+from scipy.signal import fftconvolve, resample, periodogram
+from scipy.signal.windows import blackmanharris
 from collections import deque
 from functools import partial
 
@@ -21,8 +22,6 @@ except ImportError:
     _has_sdeint = False
 else:
     _has_sdeint = True
-
-import pkg_resources
 
 # @njit
 def polar_to_cartesian(r, th):

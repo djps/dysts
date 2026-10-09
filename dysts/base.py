@@ -22,12 +22,9 @@ import sys
 
 curr_path = sys.path[0]
 
-import pkg_resources
-
-data_path_continuous = pkg_resources.resource_filename(
-    "dysts", "data/chaotic_attractors.json"
-)
-data_path_discrete = pkg_resources.resource_filename("dysts", "data/discrete_maps.json")
+_data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+data_path_continuous = os.path.join(_data_dir, "chaotic_attractors.json")
+data_path_discrete = os.path.join(_data_dir, "discrete_maps.json")
 
 import numpy as np
 
@@ -218,10 +215,17 @@ class DynSys(BaseDyn):
         out = self._rhs(*X.T, t, *param_list)
         return out
 
+    def jac(self, X, t):
+        """The Jacobian of the right hand side, if the system defines _jac"""
+        param_list = [
+            getattr(self, param_name) for param_name in self.get_param_names()
+        ]
+        return np.array(self._jac(*X, t, *param_list))
+
     def __call__(self, X, t):
         """Wrapper around right hand side"""
         return self.rhs(X, t)
-    
+
     def make_trajectory(
         self,
         n,
@@ -268,6 +272,11 @@ class DynSys(BaseDyn):
                 )
             tpts = np.linspace(0, tlim, n)
 
+        # Implicit solvers use the analytic Jacobian when the system provides one
+        solver_kwargs = {"method": method}
+        if hasattr(self, "_jac") and method in ("Radau", "BDF", "LSODA"):
+            solver_kwargs["jac"] = lambda t, y: self.jac(y, t)
+
         m = len(np.array(self.ic).shape)
         #print(m, np.array(self.ic), tpts)
         if m < 1:
@@ -275,7 +284,7 @@ class DynSys(BaseDyn):
         if m == 1:
             #print("integrating...")
             sol = integrate_dyn(
-                self, self.ic, tpts, dtval=self.dt, method=method, noise=noise
+                self, self.ic, tpts, dtval=self.dt, noise=noise, **solver_kwargs
             ).T
             #print(np.shape(sol))
         else:
@@ -283,7 +292,7 @@ class DynSys(BaseDyn):
             for ic in self.ic:
                 #print("integrating...")
                 traj = integrate_dyn(
-                    self, ic, tpts, dtval=self.dt, method=method, noise=noise
+                    self, ic, tpts, dtval=self.dt, noise=noise, **solver_kwargs
                 )
                 check_complete = (traj.shape[-1] == len(tpts))
                 if check_complete: 

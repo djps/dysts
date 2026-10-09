@@ -1,11 +1,11 @@
-import pkg_resources
+import os
 # from .dysts import *
 
-data_path = pkg_resources.resource_filename('dysts', 'data/chaotic_attractors.json')
+data_dirpath = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
-data_path2 = pkg_resources.resource_filename('dysts', 'data/discrete_maps.json')
+data_path = os.path.join(data_dirpath, 'chaotic_attractors.json')
 
-data_dirpath = pkg_resources.resource_filename('dysts', 'data')
+data_path2 = os.path.join(data_dirpath, 'discrete_maps.json')
 
 
 from pathlib import Path

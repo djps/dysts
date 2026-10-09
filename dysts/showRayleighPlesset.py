@@ -25,9 +25,11 @@ n = int(500)
 _method = "DOP853"
 _resample = True
 _return_times = True
+_postprocess = False  # keep the raw phase, used as time in fig0
 
 tpts, sol0 = model0.make_trajectory(n, method=_method, resample=_resample,
-                                    return_times=_return_times)
+                                    return_times=_return_times,
+                                    postprocess=_postprocess)
 
 fig1 = plt.figure("Rayleigh-Plesset Phase")
 ax1 = fig1.add_subplot(1, 1, 1)
